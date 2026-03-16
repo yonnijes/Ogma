@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { Asset } from 'expo-asset';
 import type { Book } from '../types/domain';
 import { MOCK_BOOKS } from '../data/mockBooks';
@@ -123,6 +123,14 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
         data={books}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No se encontraron libros.</Text>
+            <Pressable style={styles.retryButton} onPress={() => setBooks(MOCK_BOOKS)}>
+              <Text style={styles.retryText}>Cargar libros de prueba</Text>
+            </Pressable>
+          </View>
+        }
         renderItem={({ item }) => (
           <Pressable style={styles.card} onPress={() => onOpenBook(item)}>
             <Text style={styles.bookTitle}>{item.title}</Text>
@@ -214,5 +222,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#0EA5E9',
     marginTop: 8,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 100,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#64748B',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#0EA5E9',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 });
