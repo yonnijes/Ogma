@@ -3,6 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import { Asset } from 'expo-asset';
 import type { Book } from '../types/domain';
 import { MOCK_BOOKS } from '../data/mockBooks';
 import { loadBooks, saveBooks } from '../storage/localStorage';
@@ -19,8 +20,30 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
     const init = async () => {
       const stored = await loadBooks();
       if (stored.length === 0) {
-        setBooks(MOCK_BOOKS);
-        await saveBooks(MOCK_BOOKS);
+        const asset = Asset.fromModule(require('../../assets/epubs/ogma-sample-alice.epub'));
+        await asset.downloadAsync();
+
+        const targetPath = `${FileSystem.documentDirectory}ogma-sample-alice.epub`;
+        if (asset.localUri) {
+          await FileSystem.copyAsync({
+            from: asset.localUri,
+            to: targetPath,
+          });
+        }
+
+        const seeded = [
+          {
+            id: 'ogma-sample-alice',
+            title: 'Alice in Wonderland (Sample)',
+            author: 'Lewis Carroll',
+            filePath: targetPath,
+            progress: 0,
+          },
+          ...MOCK_BOOKS,
+        ];
+
+        setBooks(seeded);
+        await saveBooks(seeded);
         return;
       }
       setBooks(stored);
