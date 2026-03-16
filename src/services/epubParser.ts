@@ -13,6 +13,7 @@ export interface EpubBook {
   author: string;
   chapters: EpubChapter[];
   basePath: string;
+  images: Map<string, string>; // zipPath -> localPath
 }
 
 class EpubParser {
@@ -34,7 +35,7 @@ class EpubParser {
   private parseOpf(content: string): {
     title: string;
     author: string;
-    manifest: Map<string, string>;
+    manifest: Map<string, { href: string; mediaType: string }>;
     spine: string[];
     opfDir: string;
   } {
@@ -47,10 +48,12 @@ class EpubParser {
     const author = authorMatch ? authorMatch[1].trim() : 'Desconocido';
 
     // Parse manifest
-    const manifest = new Map<string, string>();
-    const manifestMatches = content.matchAll(/<item\s+id="([^"]+)"\s+href="([^"]+)"[^>]*>/gi);
+    const manifest = new Map<string, { href: string; mediaType: string }>();
+    const manifestMatches = content.matchAll(
+      /<item\s+id="([^"]+)"\s+href="([^"]+)"\s+media-type="([^"]+)"[^>]*>/gi
+    );
     for (const match of manifestMatches) {
-      manifest.set(match[1], match[2]);
+      manifest.set(match[1], { href: match[2], mediaType: match[3] });
     }
 
     // Parse spine
@@ -60,12 +63,7 @@ class EpubParser {
       spine.push(match[1]);
     }
 
-    // Get OPF directory
-    const opfDir = content.match(/<package[^>]*>/)?.index !== undefined 
-      ? '' 
-      : '';
-
-    return { title, author, manifest, spine, opfDir };
+    return { title, author, manifest, spine, opfDir: '' };
   }
 
   private async parseChapterHtml(content: string): Promise<string> {
@@ -102,33 +100,58 @@ class EpubParser {
       const { title, author, manifest, spine } = this.parseOpf(opfContent);
       const opfDir = opfRelativePath.substring(0, opfRelativePath.lastIndexOf('/') + 1);
 
-      // Step 4: Extract chapters to temp directory and build chapter list
+      // Step 4: Extract all files to temp directory
+      const images = new Map<string, string>();
       const chapters: EpubChapter[] = [];
-      for (const idref of spine) {
-        const href = manifest.get(idref);
-        if (href) {
-          const zipPath = `${opfDir}${href}`;
-          const file = zip.file(zipPath);
-          if (file) {
-            const content = await file.async('text');
-            const fullPath = `${extractDir}${zipPath}`;
-            
-            // Ensure directory exists
-            const dirPath = fullPath.substring(0, fullPath.lastIndexOf('/'));
-            await FileSystem.makeDirectoryAsync(dirPath, { intermediates: true });
-            
-            // Write file to temp directory
-            await FileSystem.writeAsStringAsync(fullPath, content, {
-              encoding: FileSystem.EncodingType.UTF8,
-            });
 
-            chapters.push({
-              id: idref,
-              href,
-              title: `Capítulo ${chapters.length + 1}`,
-              fullPath,
-            });
-          }
+      for (const [idref] of spine.entries()) {
+        const id = spine[idref];
+        const item = manifest.get(id);
+        if (!item) continue;
+
+        const zipPath = `${opfDir}${item.href}`;
+        const file = zip.file(zipPath);
+        if (!file) continue;
+
+        // Check if it's an image
+        const isImage = item.mediaType.startsWith('image/');
+        
+        // Ensure directory exists
+        const fullPath = `${extractDir}${zipPath}`;
+        const dirPath = fullPath.substring(0, fullPath.lastIndexOf('/'));
+        await FileSystem.makeDirectoryAsync(dirPath, { intermediates: true });
+
+        if (isImage) {
+          // Extract image as binary
+          const blob = await file.async('blob');
+          const reader = new FileReader();
+          
+          // For React Native, we need to use base64
+          const base64 = await file.async('base64');
+          const ext = item.mediaType.split('/')[1] || 'png';
+          const localPath = `${extractDir}${zipPath}`;
+          
+          await FileSystem.writeAsStringAsync(localPath, base64, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          
+          images.set(zipPath, localPath);
+        } else {
+          // Extract text file (chapter)
+          const content = await file.async('text');
+          await FileSystem.writeAsStringAsync(fullPath, content, {
+            encoding: FileSystem.EncodingType.UTF8,
+          });
+        }
+
+        // If it's a chapter (XHTML/HTML), add to chapters list
+        if (item.mediaType.includes('html') || item.mediaType.includes('xhtml')) {
+          chapters.push({
+            id,
+            href: item.href,
+            title: `Capítulo ${chapters.length + 1}`,
+            fullPath,
+          });
         }
       }
 
@@ -137,6 +160,7 @@ class EpubParser {
         author,
         chapters,
         basePath: extractDir,
+        images,
       };
     } catch (error) {
       console.error('Error parsing EPUB:', error);
@@ -157,6 +181,10 @@ class EpubParser {
       encoding: FileSystem.EncodingType.UTF8,
     });
     return this.parseChapterHtml(content);
+  }
+
+  async getImageLocalPath(zipPath: string, images: Map<string, string>): Promise<string | null> {
+    return images.get(zipPath) || null;
   }
 }
 
