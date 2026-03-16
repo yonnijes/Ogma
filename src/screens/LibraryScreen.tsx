@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Book } from '../types/domain';
 import { MOCK_BOOKS } from '../data/mockBooks';
 import { loadBooks, saveBooks } from '../storage/localStorage';
@@ -26,9 +27,9 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerText}>
           <Text style={styles.title}>Biblioteca</Text>
           <Text style={styles.subtitle}>Tus libros disponibles</Text>
         </View>
@@ -49,7 +50,7 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
           </Pressable>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -57,13 +58,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    gap: 12,
+  },
+  headerText: {
+    flex: 1,
   },
   title: {
     fontSize: 24,
@@ -75,7 +81,7 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   glossaryButton: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 999,
     borderWidth: 1,
@@ -89,6 +95,7 @@ const styles = StyleSheet.create({
   list: {
     gap: 12,
     paddingBottom: 24,
+    paddingTop: 4,
   },
   card: {
     backgroundColor: '#FFFFFF',
