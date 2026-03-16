@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { VocabEntry } from '../types/domain';
 import { loadVocab } from '../storage/localStorage';
 
-export function GlossaryScreen() {
+interface GlossaryScreenProps {
+  onBack: () => void;
+}
+
+export function GlossaryScreen({ onBack }: GlossaryScreenProps) {
   const [vocab, setVocab] = useState<VocabEntry[]>([]);
 
   useEffect(() => {
@@ -17,7 +21,12 @@ export function GlossaryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Text style={styles.title}>Glosario</Text>
+      <View style={styles.header}>
+        <Pressable onPress={onBack}>
+          <Text style={styles.back}>← Volver</Text>
+        </Pressable>
+        <Text style={styles.title}>Glosario</Text>
+      </View>
       {vocab.length === 0 ? (
         <Text style={styles.empty}>Aún no has guardado palabras.</Text>
       ) : (
@@ -44,10 +53,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 8,
   },
+  header: {
+    marginBottom: 12,
+  },
+  back: {
+    color: '#0EA5E9',
+    fontSize: 14,
+    marginBottom: 8,
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    marginBottom: 12,
   },
   empty: {
     color: '#64748B',

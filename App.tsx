@@ -41,7 +41,9 @@ export default function App() {
             />
           )}
         </Stack.Screen>
-        <Stack.Screen name="Glossary" component={GlossaryScreen} />
+        <Stack.Screen name="Glossary">
+          {(props) => <GlossaryScreen {...props} onBack={() => props.navigation.goBack()} />}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );

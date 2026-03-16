@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import type { Book } from '../types/domain';
 import { MOCK_BOOKS } from '../data/mockBooks';
 import { loadBooks, saveBooks } from '../storage/localStorage';
@@ -26,6 +28,40 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
     void init();
   }, []);
 
+  const handleImportEpub = async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'application/epub+zip',
+      copyToCacheDirectory: true,
+    });
+
+    if (result.canceled) return;
+
+    const file = result.assets[0];
+    if (!file) return;
+
+    const fileName = file.name ?? `book-${Date.now()}.epub`;
+    const targetPath = `${FileSystem.documentDirectory}${fileName}`;
+
+    await FileSystem.copyAsync({
+      from: file.uri,
+      to: targetPath,
+    });
+
+    const title = fileName.replace(/\.epub$/i, '').replace(/[_-]/g, ' ');
+
+    const newBook: Book = {
+      id: `local-${Date.now()}`,
+      title: title || 'EPUB Importado',
+      author: 'Desconocido',
+      filePath: targetPath,
+      progress: 0,
+    };
+
+    const updated = [newBook, ...books];
+    setBooks(updated);
+    await saveBooks(updated);
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -33,9 +69,14 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
           <Text style={styles.title}>Biblioteca</Text>
           <Text style={styles.subtitle}>Tus libros disponibles</Text>
         </View>
-        <Pressable style={styles.glossaryButton} onPress={onOpenGlossary}>
-          <Text style={styles.glossaryText}>Glosario</Text>
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable style={styles.secondaryButton} onPress={handleImportEpub}>
+            <Text style={styles.secondaryText}>Importar EPUB</Text>
+          </Pressable>
+          <Pressable style={styles.glossaryButton} onPress={onOpenGlossary}>
+            <Text style={styles.glossaryText}>Glosario</Text>
+          </Pressable>
+        </View>
       </View>
 
       <FlatList
@@ -71,6 +112,10 @@ const styles = StyleSheet.create({
   headerText: {
     flex: 1,
   },
+  headerActions: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
@@ -79,6 +124,18 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#475569',
+  },
+  secondaryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#94A3B8',
+  },
+  secondaryText: {
+    color: '#334155',
+    fontSize: 11,
+    fontWeight: '600',
   },
   glossaryButton: {
     paddingVertical: 10,
