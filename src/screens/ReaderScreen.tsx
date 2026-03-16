@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Book } from '../types/domain';
 
 interface ReaderScreenProps {
@@ -15,7 +16,7 @@ export function ReaderScreen({ book, onBack }: ReaderScreenProps) {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Pressable onPress={onBack}>
           <Text style={styles.back}>← Volver</Text>
@@ -45,7 +46,7 @@ export function ReaderScreen({ book, onBack }: ReaderScreenProps) {
           </View>
         </Pressable>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -55,7 +56,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   header: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',

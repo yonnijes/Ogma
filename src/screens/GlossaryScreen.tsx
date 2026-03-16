@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { VocabEntry } from '../types/domain';
 import { loadVocab } from '../storage/localStorage';
 
@@ -15,7 +16,7 @@ export function GlossaryScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.title}>Glosario</Text>
       {vocab.length === 0 ? (
         <Text style={styles.empty}>Aún no has guardado palabras.</Text>
@@ -32,7 +33,7 @@ export function GlossaryScreen() {
           )}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -40,7 +41,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   title: {
     fontSize: 24,
