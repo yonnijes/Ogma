@@ -5,7 +5,6 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Asset } from 'expo-asset';
 import type { Book } from '../types/domain';
-import { MOCK_BOOKS } from '../data/mockBooks';
 import { loadBooks, saveBooks } from '../storage/localStorage';
 
 interface LibraryScreenProps {
@@ -24,7 +23,7 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
         console.log('Libros en storage:', stored.length);
 
         if (stored.length === 0) {
-          console.log('Biblioteca vacía. Intentando cargar libro de muestra...');
+          console.log('Biblioteca vacía. Cargando libro de muestra...');
           
           const asset = Asset.fromModule(require('../../assets/epubs/ogma-sample-alice.epub'));
           console.log('Asset obtenido:', asset.name);
@@ -50,7 +49,6 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
               filePath: targetPath,
               progress: 0,
             },
-            ...MOCK_BOOKS,
           ];
 
           console.log('Estableciendo libros iniciales:', seeded.length);
@@ -61,8 +59,7 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
         }
       } catch (error) {
         console.error('Error cargando biblioteca:', error);
-        // Mostrar al menos los mocks si falla el asset
-        setBooks(MOCK_BOOKS);
+        setBooks([]);
       }
     };
     void init();
@@ -125,10 +122,8 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No se encontraron libros.</Text>
-            <Pressable style={styles.retryButton} onPress={() => setBooks(MOCK_BOOKS)}>
-              <Text style={styles.retryText}>Cargar libros de prueba</Text>
-            </Pressable>
+            <Text style={styles.emptyText}>No hay libros en tu biblioteca.</Text>
+            <Text style={styles.emptySubtext}>Toca "Importar EPUB" para agregar uno.</Text>
           </View>
         }
         renderItem={({ item }) => (
