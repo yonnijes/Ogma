@@ -76,7 +76,21 @@ export function ReaderScreen({ book, onBack }: ReaderScreenProps) {
       }
     } catch (error) {
       console.error('Error loading EPUB:', error);
-      setChapterContent('<h1>Error cargando el libro</h1><p>No se pudo leer el archivo EPUB.</p>');
+      setChapterContent(`
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; padding: 24px; text-align: center;">
+          <div style="font-size: 48px; margin-bottom: 16px;">📚</div>
+          <h1 style="color: #EF4444; font-size: 22px; margin: 0 0 12px 0;">Error al cargar</h1>
+          <p style="color: #64748B; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;">
+            No se pudo leer el archivo EPUB.<br/>
+            Verifica que el archivo no esté corrupto.
+          </p>
+          <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 12px 16px;">
+            <p style="color: #DC2626; font-size: 13px; margin: 0;">
+              💡 Consejo: Intenta importar el EPUB nuevamente
+            </p>
+          </div>
+        </div>
+      `);
     } finally {
       setLoading(false);
     }
@@ -215,7 +229,16 @@ export function ReaderScreen({ book, onBack }: ReaderScreenProps) {
       setCurrentPage(1);
     } catch (error) {
       console.error('Error loading chapter:', error);
-      setChapterContent('<h1>Error</h1><p>No se pudo cargar este capítulo.</p>');
+      setChapterContent(`
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; padding: 24px; text-align: center;">
+          <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+          <h2 style="color: #F59E0B; font-size: 20px; margin: 0 0 12px 0;">Error en el capítulo</h2>
+          <p style="color: #64748B; font-size: 15px; line-height: 1.6; margin: 0;">
+            No se pudo cargar este capítulo.<br/>
+            Puedes intentar con el siguiente.
+          </p>
+        </div>
+      `);
     }
   };
 
