@@ -18,35 +18,52 @@ export function LibraryScreen({ onOpenBook, onOpenGlossary }: LibraryScreenProps
 
   useEffect(() => {
     const init = async () => {
-      const stored = await loadBooks();
-      if (stored.length === 0) {
-        const asset = Asset.fromModule(require('../../assets/epubs/ogma-sample-alice.epub'));
-        await asset.downloadAsync();
+      try {
+        console.log('--- Iniciando carga de biblioteca ---');
+        const stored = await loadBooks();
+        console.log('Libros en storage:', stored.length);
 
-        const targetPath = `${FileSystem.documentDirectory}ogma-sample-alice.epub`;
-        if (asset.localUri) {
-          await FileSystem.copyAsync({
-            from: asset.localUri,
-            to: targetPath,
-          });
+        if (stored.length === 0) {
+          console.log('Biblioteca vacía. Intentando cargar libro de muestra...');
+          
+          const asset = Asset.fromModule(require('../../assets/epubs/ogma-sample-alice.epub'));
+          console.log('Asset obtenido:', asset.name);
+          
+          await asset.downloadAsync();
+          console.log('Asset descargado. LocalUri:', asset.localUri);
+
+          const targetPath = `${FileSystem.documentDirectory}ogma-sample-alice.epub`;
+          
+          if (asset.localUri) {
+            await FileSystem.copyAsync({
+              from: asset.localUri,
+              to: targetPath,
+            });
+            console.log('Archivo copiado a:', targetPath);
+          }
+
+          const seeded = [
+            {
+              id: 'ogma-sample-alice',
+              title: 'Alice in Wonderland (Sample)',
+              author: 'Lewis Carroll',
+              filePath: targetPath,
+              progress: 0,
+            },
+            ...MOCK_BOOKS,
+          ];
+
+          console.log('Estableciendo libros iniciales:', seeded.length);
+          setBooks(seeded);
+          await saveBooks(seeded);
+        } else {
+          setBooks(stored);
         }
-
-        const seeded = [
-          {
-            id: 'ogma-sample-alice',
-            title: 'Alice in Wonderland (Sample)',
-            author: 'Lewis Carroll',
-            filePath: targetPath,
-            progress: 0,
-          },
-          ...MOCK_BOOKS,
-        ];
-
-        setBooks(seeded);
-        await saveBooks(seeded);
-        return;
+      } catch (error) {
+        console.error('Error cargando biblioteca:', error);
+        // Mostrar al menos los mocks si falla el asset
+        setBooks(MOCK_BOOKS);
       }
-      setBooks(stored);
     };
     void init();
   }, []);
